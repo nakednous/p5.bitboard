@@ -1,0 +1,51 @@
+{
+  "name": "p5.bitboard",
+  "version": "0.1.0",
+  "description": "[![Read the Paper](https://img.shields.io/badge/Read%20the%20Paper-ScienceDirect-blue)](https://www.sciencedirect.com/science/article/pii/S2352711024002097?ref=cra_js_challenge&fr=RR-1) A grid-based teaching and rendering library for p5.js.",
+  "type": "module",
+  "main": "dist/p5.bitboard.esm.js",
+  "module": "dist/p5.bitboard.esm.js",
+  "types": "dist/bitboard.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/p5.bitboard.esm.js",
+      "types": "./dist/bitboard.d.ts"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "types": "tsc"
+  },
+  "keywords": [
+    "p5",
+    "p5.js",
+    "bitboard",
+    "grid-based games",
+    "visualcomputing",
+    "education",
+    "webgl",
+    "graphics"
+  ],
+  "author": "JP Charalambos <jpcharalambos@unal.edu.co>",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nakednous/p5.bitboard.js.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "p5": "^2.0.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@types/estree": "^1.0.8",
+    "p5": "^2.0.3",
+    "rollup": "^4.44.1",
+    "typescript": "^5.8.3"
+  }
+}
