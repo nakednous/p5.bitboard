@@ -9,9 +9,7 @@
  * This module defines the Bitboard class.
  */
 
-'use strict';
-
-import p5 from 'p5';
+'use strict'
 
 // TODOs
 class Bitboard {
@@ -47,8 +45,8 @@ class Bitboard {
     return this.value.toString(2)
   }
 
-  static fromBinaryString(s, width = 8, height = 8, littleEndian = false) {
-    return new Bitboard(BigInt('0b' + s), width, height, littleEndian)
+  fromBinaryString(s) {
+    return new Bitboard(BigInt('0b' + s), this.width, this.height, this.littleEndian)
   }
 
   mask() {
@@ -151,4 +149,4 @@ class Bitboard {
 }
 
 // Export the Bitboard class as the default export
-export default Bitboard;
+export default Bitboard

@@ -1,6 +1,6 @@
 /**
  * @file Adds `createBitboard` and `drawBitboard` functions to the p5 prototype.
- * @version 3.1.2
+ * @version 0.1.0
  * @author JP Charalambos
  * @license GPL-3.0-only
  *
@@ -9,17 +9,17 @@
  * Part of the p5.bitboard.js library.
  */
 
-'use strict';
+'use strict'
 
-import p5 from 'p5';
-import Bitboard from './bitboard.js';
+import p5 from 'p5'
+import Bitboard from './bitboard.js'
 
-p5.registerAddon((p5, fn) => {
+p5.registerAddon((_, fn) => {
   fn.createBitboard = function (...args) {
-    return new Bitboard(this, ...args);
+    return new Bitboard(...args)
   }
 });
 
 // Export default for ESM and IIFE
-export default Bitboard;
+export default Bitboard
 // export { Bitboard } // requires a src/iife-entry.js
