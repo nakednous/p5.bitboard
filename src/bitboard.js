@@ -13,15 +13,15 @@
 
 // TODOs
 class Bitboard {
-  constructor(value = 0n, width = 8, height = 8, littleEndian = false) {
-    this.value = BigInt(value)
+  constructor(bitboard = 0n, width = 8, height = 8, littleEndian = false) {
+    this.bitboard = BigInt(bitboard)
     this.width = width
     this.height = height
     this.littleEndian = littleEndian
   }
 
   dim() {
-    return this.value.toString(2).length
+    return this.bitboard.toString(2).length
   }
 
   index(row, col) {
@@ -42,7 +42,7 @@ class Bitboard {
   }
 
   toBinaryString() {
-    return this.value.toString(2)
+    return this.bitboard.toString(2)
   }
 
   fromBinaryString(s) {
@@ -54,24 +54,24 @@ class Bitboard {
   }
 
   and(other) {
-    return new Bitboard((this.value & other.value) & this.mask(), this.width, this.height, this.littleEndian)
+    return new Bitboard((this.bitboard & other.bitboard) & this.mask(), this.width, this.height, this.littleEndian)
   }
 
   or(other) {
-    return new Bitboard((this.value | other.value) & this.mask(), this.width, this.height, this.littleEndian)
+    return new Bitboard((this.bitboard | other.bitboard) & this.mask(), this.width, this.height, this.littleEndian)
   }
 
   xor(other) {
-    return new Bitboard((this.value ^ other.value) & this.mask(), this.width, this.height, this.littleEndian)
+    return new Bitboard((this.bitboard ^ other.bitboard) & this.mask(), this.width, this.height, this.littleEndian)
   }
 
   not() {
-    return new Bitboard((~this.value) & this.mask(), this.width, this.height, this.littleEndian)
+    return new Bitboard((~this.bitboard) & this.mask(), this.width, this.height, this.littleEndian)
   }
 
   rank() {
     let count = 0n
-    let v = this.value
+    let v = this.bitboard
     while (v) {
       count += v & 1n
       v >>= 1n
@@ -84,7 +84,7 @@ class Bitboard {
     for (let row = 0; row < this.height; row++) {
       for (let col = 0; col < this.width; col++) {
         const i = this.index(row, col)
-        if (((this.value >> i) & 1n) === 1n) {
+        if (((this.bitboard >> i) & 1n) === 1n) {
           const r2 = row + dy
           const c2 = col + dx
           if (truncate && (r2 < 0 || r2 >= this.height || c2 < 0 || c2 >= this.width)) continue
@@ -101,17 +101,17 @@ class Bitboard {
   shift(dx = 1, truncate = false) {
     const totalBits = BigInt(this.width * this.height)
     const mask = (1n << totalBits) - 1n
-    if (dx === 0) return new Bitboard(this.value, this.width, this.height, this.littleEndian)
+    if (dx === 0) return new Bitboard(this.bitboard, this.width, this.height, this.littleEndian)
     if (Math.abs(dx) !== 1) {
       console.warn('shift only supports dx = -1, 0, or 1.')
-      return new Bitboard(this.value, this.width, this.height, this.littleEndian)
+      return new Bitboard(this.bitboard, this.width, this.height, this.littleEndian)
     }
     const left = dx === 1
     const result = truncate
-      ? left ? (this.value << 1n) & mask : this.value >> 1n
+      ? left ? (this.bitboard << 1n) & mask : this.bitboard >> 1n
       : left
-        ? ((this.value << 1n) | ((this.value >> (totalBits - 1n)) & 1n)) & mask
-        : (this.value >> 1n) | ((this.value & 1n) << (totalBits - 1n))
+        ? ((this.bitboard << 1n) | ((this.bitboard >> (totalBits - 1n)) & 1n)) & mask
+        : (this.bitboard >> 1n) | ((this.bitboard & 1n) << (totalBits - 1n))
     return new Bitboard(result, this.width, this.height, this.littleEndian)
   }
 
@@ -120,7 +120,7 @@ class Bitboard {
     for (let row = 0; row < this.height; row++) {
       for (let col = 0; col < this.width; col++) {
         const i = this.index(row, col)
-        if (((this.value >> i) & 1n) === 1n) {
+        if (((this.bitboard >> i) & 1n) === 1n) {
           if (row < minRow) minRow = row
           if (row > maxRow) maxRow = row
           if (col < minCol) minCol = col
@@ -139,7 +139,7 @@ class Bitboard {
       for (let c = 0; c < w; c++) {
         const sourceIndex = new Bitboard(0n, this.width, this.height, this.littleEndian).index(row + r, col + c)
         const targetIndex = new Bitboard(0n, w, h, this.littleEndian).index(r, c)
-        if (((this.value >> sourceIndex) & 1n) === 1n) {
+        if (((this.bitboard >> sourceIndex) & 1n) === 1n) {
           result |= 1n << targetIndex
         }
       }
