@@ -11,6 +11,14 @@ let board
 function setup() {
   createCanvas(COLS * Quadrille.cellLength, ROWS * Quadrille.cellLength)
   board = createQuadrille(COLS, ROWS, COLS + ROWS + 1, color('lime'))
+  // active at (0,0) and (2,0)
+  const b = new Bitboard(0b100000100n, 3, 3)
+  for (const { row, col, value } of b) {
+    console.log(row, col, value)
+  }
+  for (const cell of b.cells(v => v === 0)) {
+    console.log('Empty cell at', cell.row, cell.col)
+  }
 }
 
 function draw() {

@@ -20,6 +20,38 @@ class Bitboard {
     this.littleEndian = littleEndian
   }
 
+  *cells(filter = null) {
+    const isFn = typeof filter === 'function'
+    const isSet = filter && !isFn && typeof filter !== 'object'
+    const isObj = filter && typeof filter === 'object'
+    const set = isSet ? new Set(filter) : null
+    for (let row = 0; row < this.height; row++) {
+      for (let col = 0; col < this.width; col++) {
+        const index = this.index(row, col)
+        const bit = (this.bitboard >> index) & 1n
+        const value = bit === 1n ? 1 : 0
+        const match = !filter
+          || (isFn && filter(value))
+          || (isSet && set.has(value))
+          || (isObj &&
+            (!filter.value || filter.value(value)) &&
+            (!filter.row || filter.row(row)) &&
+            (!filter.col || filter.col(col)))
+        if (match) yield { row, col, value }
+      }
+    }
+  }
+
+  *[Symbol.iterator]() {
+    yield* this.cells()
+  }
+
+  visit(callback, filter = null) {
+    for (const cell of this.cells(filter)) {
+      callback(cell)
+    }
+  }
+
   dim() {
     return this.bitboard.toString(2).length
   }
