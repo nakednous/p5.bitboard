@@ -12,13 +12,61 @@
 'use strict'
 
 // TODOs
+
 class Bitboard {
-  constructor(bitboard = 0n, value = 0, width = 8, height = 8, littleEndian = false) {
-    this.bitboard = BigInt(bitboard)
-    this.value = value
-    this.width = width
-    this.height = height
-    this.littleEndian = littleEndian
+  static VERSION = '0.1.0'
+
+  constructor(...args) {
+    let bitboard = 0n
+    let width = 8
+    let height
+    let littleEndian = false
+    args.forEach(arg =>
+      typeof arg === 'bigint' ? bitboard = arg :
+        typeof arg === 'number' && width === 8 ? width = arg :
+          typeof arg === 'number' && height === undefined ? height = arg :
+            typeof arg === 'boolean' ? littleEndian = arg : null
+    )
+    if (height === undefined) {
+      const bits = bitboard.toString(2).length
+      height = Math.ceil(bits / width)
+      console.log(`Bitboard: computed height = ${height}`)
+    }
+    const dim = width * height
+    const bits = bitboard.toString(2).length
+    if (bits > dim) {
+      console.warn('Bitboard is too long and will be cropped')
+      const mask = (1n << BigInt(dim)) - 1n
+      const cropped = bitboard & mask
+      console.warn('Cropped bitboard:', cropped.toString(2).padStart(dim, '0'))
+      bitboard = cropped
+    }
+    this._bitboard = bitboard
+    this._width = width
+    this._height = height
+    this._littleEndian = littleEndian
+  }
+
+  get bitboard() {
+    return this._bitboard
+  }
+  get width() {
+    return this._width
+  }
+  get height() {
+    return this._height
+  }
+  get littleEndian() {
+    return this._littleEndian
+  }
+
+  clone() {
+    return new this.constructor(
+      this._bitboard,
+      this._width,
+      this._height,
+      this._littleEndian
+    )
   }
 
   *cells(filter = null) {
@@ -26,10 +74,10 @@ class Bitboard {
     const isSet = filter && !isFn && typeof filter !== 'object'
     const isObj = filter && typeof filter === 'object'
     const set = isSet ? new Set(filter) : null
-    for (let row = 0; row < this.height; row++) {
-      for (let col = 0; col < this.width; col++) {
+    for (let row = 0; row < this._height; row++) {
+      for (let col = 0; col < this._width; col++) {
         const index = this.index(row, col)
-        const bit = (this.bitboard >> index) & 1n ? 1 : 0
+        const bit = (this._bitboard >> index) & 1n ? 1 : 0
         const match = !filter
           || (isFn && filter(bit))
           || (isSet && set.has(bit))
@@ -52,58 +100,137 @@ class Bitboard {
     }
   }
 
-  dim() {
-    return this.bitboard.toString(2).length
+  size() {
+    return BigInt(this._width * this._height)
   }
 
   index(row, col) {
-    const index = row * this.width + col
-    return this.littleEndian
+    const index = row * this._width + col
+    return this._littleEndian
       ? BigInt(index)
-      : BigInt(this.width * this.height - 1 - index)
+      : BigInt(this._width * this._height - 1 - index)
   }
 
   cell(bitIndex) {
-    const maxIndex = this.width * this.height - 1
+    const maxIndex = this._width * this._height - 1
     const raw = Number(bitIndex)
-    const index = this.littleEndian ? raw : maxIndex - raw
+    const index = this._littleEndian ? raw : maxIndex - raw
     return {
-      row: Math.floor(index / this.width),
-      col: index % this.width
+      row: Math.floor(index / this._width),
+      col: index % this._width
     }
   }
 
+  fill(...args) {
+    if (args.length === 0) {
+      // Fill entire bitboard
+      this._bitboard = (1n << this.size()) - 1n
+      return this
+    }
+    let row, col
+    args.forEach(arg =>
+      typeof arg === 'number' && row === undefined ? row = arg :
+        typeof arg === 'number' && col === undefined ? col = arg : null
+    )
+    if (col === undefined) {
+      // Fill entire row
+      for (let c = 0; c < this._width; c++) this.fill(row, c)
+    } else {
+      // Fill single cell
+      const index = this.index(row, col)
+      this._bitboard |= (1n << index)
+    }
+    return this
+  }
+
+  clear(...args) {
+    if (args.length === 0) {
+      // Clear entire bitboard
+      this._bitboard = 0n
+      return this
+    }
+    let row, col
+    args.forEach(arg =>
+      typeof arg === 'number' && row === undefined ? row = arg :
+        typeof arg === 'number' && col === undefined ? col = arg : null
+    )
+    if (col === undefined) {
+      // Clear entire row
+      for (let c = 0; c < this._width; c++) this.clear(row, c)
+    } else {
+      // Clear single cell
+      const index = this.index(row, col)
+      this._bitboard &= ~(1n << index)
+    }
+    return this
+  }
+
+  toggle(...args) {
+    if (args.length === 0) {
+      // Toggle all bits
+      const mask = (1n << this.size()) - 1n
+      this._bitboard ^= mask
+      return this
+    }
+    let row, col
+    args.forEach(arg =>
+      typeof arg === 'number' && row === undefined ? row = arg :
+        typeof arg === 'number' && col === undefined ? col = arg : null
+    )
+    if (col === undefined) {
+      // Toggle entire row (non-recursive)
+      for (let c = 0; c < this._width; c++) {
+        const index = this.index(row, c)
+        this._bitboard ^= (1n << index)
+      }
+    } else {
+      // Toggle single cell
+      const index = this.index(row, col)
+      this._bitboard ^= (1n << index)
+    }
+    return this
+  }
+
+  isFilled(row, col) {
+    const index = this.index(row, col)
+    return (this._bitboard >> index) & 1n ? true : false
+  }
+
+  isEmpty(row, col) {
+    return !this.isFilled(row, col)
+  }
+
   toBinaryString() {
-    return this.bitboard.toString(2)
+    return this._bitboard.toString(2)
   }
 
   fromBinaryString(s) {
-    return new Bitboard(BigInt('0b' + s), this.width, this.height, this.littleEndian)
+    return new Bitboard(BigInt('0b' + s), this._width, this._height, this._littleEndian)
   }
 
   mask() {
-    return (1n << BigInt(this.width * this.height)) - 1n
+    return (1n << BigInt(this._width * this._height)) - 1n
   }
 
   and(other) {
-    return new Bitboard((this.bitboard & other.bitboard) & this.mask(), this.width, this.height, this.littleEndian)
+    return new Bitboard((this._bitboard & other._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   or(other) {
-    return new Bitboard((this.bitboard | other.bitboard) & this.mask(), this.width, this.height, this.littleEndian)
+    return new Bitboard((this._bitboard | other._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   xor(other) {
-    return new Bitboard((this.bitboard ^ other.bitboard) & this.mask(), this.width, this.height, this.littleEndian)
+    return new Bitboard((this._bitboard ^ other._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   not() {
-    return new Bitboard((~this.bitboard) & this.mask(), this.width, this.height, this.littleEndian)
+    return new Bitboard((~this._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   rank() {
     let count = 0n
-    let v = this.bitboard
+    let v = this._bitboard
     while (v) {
       count += v & 1n
       v >>= 1n
@@ -113,46 +240,46 @@ class Bitboard {
 
   translate(dx = 0, dy = 0, truncate = false) {
     let result = 0n
-    for (let row = 0; row < this.height; row++) {
-      for (let col = 0; col < this.width; col++) {
+    for (let row = 0; row < this._height; row++) {
+      for (let col = 0; col < this._width; col++) {
         const i = this.index(row, col)
-        if (((this.bitboard >> i) & 1n) === 1n) {
+        if (((this._bitboard >> i) & 1n) === 1n) {
           const r2 = row + dy
           const c2 = col + dx
-          if (truncate && (r2 < 0 || r2 >= this.height || c2 < 0 || c2 >= this.width)) continue
-          const wrappedRow = ((r2 % this.height) + this.height) % this.height
-          const wrappedCol = ((c2 % this.width) + this.width) % this.width
+          if (truncate && (r2 < 0 || r2 >= this._height || c2 < 0 || c2 >= this._width)) continue
+          const wrappedRow = ((r2 % this._height) + this._height) % this._height
+          const wrappedCol = ((c2 % this._width) + this._width) % this._width
           const j = this.index(truncate ? r2 : wrappedRow, truncate ? c2 : wrappedCol)
           result |= 1n << j
         }
       }
     }
-    return new Bitboard(result, this.width, this.height, this.littleEndian)
+    return new Bitboard(result, this._width, this._height, this._littleEndian)
   }
 
   shift(dx = 1, truncate = false) {
-    const totalBits = BigInt(this.width * this.height)
+    const totalBits = BigInt(this._width * this._height)
     const mask = (1n << totalBits) - 1n
-    if (dx === 0) return new Bitboard(this.bitboard, this.width, this.height, this.littleEndian)
+    if (dx === 0) return new Bitboard(this._bitboard, this._width, this._height, this._littleEndian)
     if (Math.abs(dx) !== 1) {
       console.warn('shift only supports dx = -1, 0, or 1.')
-      return new Bitboard(this.bitboard, this.width, this.height, this.littleEndian)
+      return new Bitboard(this._bitboard, this._width, this._height, this._littleEndian)
     }
     const left = dx === 1
     const result = truncate
-      ? left ? (this.bitboard << 1n) & mask : this.bitboard >> 1n
+      ? left ? (this._bitboard << 1n) & mask : this._bitboard >> 1n
       : left
-        ? ((this.bitboard << 1n) | ((this.bitboard >> (totalBits - 1n)) & 1n)) & mask
-        : (this.bitboard >> 1n) | ((this.bitboard & 1n) << (totalBits - 1n))
-    return new Bitboard(result, this.width, this.height, this.littleEndian)
+        ? ((this._bitboard << 1n) | ((this._bitboard >> (totalBits - 1n)) & 1n)) & mask
+        : (this._bitboard >> 1n) | ((this._bitboard & 1n) << (totalBits - 1n))
+    return new Bitboard(result, this._width, this._height, this._littleEndian)
   }
 
   bounds() {
-    let minRow = this.height, maxRow = -1, minCol = this.width, maxCol = -1
-    for (let row = 0; row < this.height; row++) {
-      for (let col = 0; col < this.width; col++) {
+    let minRow = this._height, maxRow = -1, minCol = this._width, maxCol = -1
+    for (let row = 0; row < this._height; row++) {
+      for (let col = 0; col < this._width; col++) {
         const i = this.index(row, col)
-        if (((this.bitboard >> i) & 1n) === 1n) {
+        if (((this._bitboard >> i) & 1n) === 1n) {
           if (row < minRow) minRow = row
           if (row > maxRow) maxRow = row
           if (col < minCol) minCol = col
@@ -169,14 +296,14 @@ class Bitboard {
     let result = 0n
     for (let r = 0; r < h; r++) {
       for (let c = 0; c < w; c++) {
-        const sourceIndex = new Bitboard(0n, this.width, this.height, this.littleEndian).index(row + r, col + c)
-        const targetIndex = new Bitboard(0n, w, h, this.littleEndian).index(r, c)
-        if (((this.bitboard >> sourceIndex) & 1n) === 1n) {
+        const sourceIndex = new Bitboard(0n, this._width, this._height, this._littleEndian).index(row + r, col + c)
+        const targetIndex = new Bitboard(0n, w, h, this._littleEndian).index(r, c)
+        if (((this._bitboard >> sourceIndex) & 1n) === 1n) {
           result |= 1n << targetIndex
         }
       }
     }
-    return new Bitboard(result, w, h, this.littleEndian)
+    return new Bitboard(result, w, h, this._littleEndian)
   }
 }
 

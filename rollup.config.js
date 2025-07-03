@@ -1,6 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve'
 
-const external = ['p5']
+const external = ['p5', 'p5.quadrille']
 
 export default [
   // ESM build for npm / Vite
@@ -22,7 +22,10 @@ export default [
       file: 'dist/p5.bitboard.js',
       format: 'iife',
       name: 'Bitboard',
-      globals: { p5: 'p5' },
+      globals: {
+        p5: 'p5',
+        'p5.quadrille': 'Quadrille'
+      },
       exports: 'default',
       sourcemap: true
     },
