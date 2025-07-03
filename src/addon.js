@@ -17,6 +17,14 @@ import Quadrille from 'p5.quadrille'
 
 p5.registerAddon((_, fn) => {
   fn.createBitboard = function (...args) {
+    if (args[0] instanceof Quadrille) {
+      const quadrille = args[0]
+      const littleEndian = !!args[1]
+      const bitboard = quadrille.toBitboard(littleEndian)
+      const width = quadrille.width
+      const height = quadrille.height
+      return new Bitboard(bitboard, width, height, littleEndian)
+    }
     return new Bitboard(...args)
   }
 
