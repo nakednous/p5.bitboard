@@ -13,8 +13,9 @@
 
 // TODOs
 class Bitboard {
-  constructor(bitboard = 0n, width = 8, height = 8, littleEndian = false) {
+  constructor(bitboard = 0n, value = 0, width = 8, height = 8, littleEndian = false) {
     this.bitboard = BigInt(bitboard)
+    this.value = value
     this.width = width
     this.height = height
     this.littleEndian = littleEndian
@@ -28,16 +29,15 @@ class Bitboard {
     for (let row = 0; row < this.height; row++) {
       for (let col = 0; col < this.width; col++) {
         const index = this.index(row, col)
-        const bit = (this.bitboard >> index) & 1n
-        const value = bit === 1n ? 1 : 0
+        const bit = (this.bitboard >> index) & 1n ? 1 : 0
         const match = !filter
-          || (isFn && filter(value))
-          || (isSet && set.has(value))
+          || (isFn && filter(bit))
+          || (isSet && set.has(bit))
           || (isObj &&
-            (!filter.value || filter.value(value)) &&
+            (!filter.bit || filter.bit(bit)) &&
             (!filter.row || filter.row(row)) &&
             (!filter.col || filter.col(col)))
-        if (match) yield { row, col, value }
+        if (match) yield { row, col, bit }
       }
     }
   }

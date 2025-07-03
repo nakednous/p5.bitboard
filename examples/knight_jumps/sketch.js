@@ -37,8 +37,8 @@ function mousePressed() {
 
   //const knight = new Bitboard(17592186044416n, COLS, ROWS, false).translate(dx, dy, true)
   //const jumps = new Bitboard(46193421450995564544n, COLS, ROWS, false).translate(dx, dy, true)
-  const knight = createBitboard(17592186044416n, COLS, ROWS, false).translate(dx, dy, true)
-  const jumps = createBitboard(46193421450995564544n, COLS, ROWS, false).translate(dx, dy, true)
+  const knight = createBitboard(17592186044416n, 0, COLS, ROWS, false).translate(dx, dy, true)
+  const jumps = createBitboard(46193421450995564544n, 0, COLS, ROWS, false).translate(dx, dy, true)
 
   knightBoard.clear().fill(knight.bitboard, Quadrille.chessSymbols.get('N'))
   jumpsBoard.clear().fill(jumps.bitboard, color('lightblue'))
