@@ -26,6 +26,7 @@ function draw() {
   drawQuadrille(board)
   drawBitboard(knightBitboard, knightSymbol)
   drawBitboard(jumpsBitboard, color(targetColor))
+  //drawBitboard(jumpsBitboard)
 }
 
 function mousePressed() {

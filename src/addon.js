@@ -20,12 +20,13 @@ p5.registerAddon((_, fn) => {
     return new Bitboard(...args)
   }
 
-  fn.drawBitboard = function (bitboard, value, {
+  fn.drawBitboard = function (bitboard, value = 0, {
     graphics = this,
     x,
     y,
     row,
     col,
+    filter,
     textFont,
     origin,
     options = {},
@@ -43,55 +44,48 @@ p5.registerAddon((_, fn) => {
     textColor = Quadrille.textColor,
     textZoom = Quadrille.textZoom
   } = {}) {
-    const width = bitboard.width
-    const height = bitboard.height
     const mode = graphics._renderer instanceof p5.RendererGL ? 'webgl' : 'p2d'
     origin ??= mode === 'webgl' ? 'center' : 'corner'
     options.origin ??= origin
     const cx = x ?? (Number.isInteger(col) ? col * cellLength : 0)
     const cy = y ?? (Number.isInteger(row) ? row * cellLength : 0)
     graphics.push()
-    // Align to p5 coordinate convention
-    if (mode === 'webgl') {
-      if (origin === 'corner') graphics.translate(-graphics.width / 2, -graphics.height / 2)
-    } else {
-      if (origin === 'center') graphics.translate(graphics.width / 2, graphics.height / 2)
-    }
+    mode === 'webgl'
+      ? (origin === 'corner' && graphics.translate(-graphics.width / 2, -graphics.height / 2))
+      : (origin === 'center' && graphics.translate(graphics.width / 2, graphics.height / 2))
     graphics.translate(cx, cy)
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        const index = bitboard.index(row, col)
-        const bit = (bitboard.bitboard >> index) & 1n
-        if (bit) {
-          graphics.push()
-          graphics.translate(col * cellLength, row * cellLength)
-          const params = {
-            graphics,
-            value,
-            width,
-            height,
-            row,
-            col,
-            outline,
-            outlineWeight,
-            cellLength,
-            textColor,
-            textZoom,
-            textFont,
-            origin,
-            options,
-            functionDisplay,
-            imageDisplay,
-            colorDisplay,
-            stringDisplay,
-            numberDisplay,
-            tileDisplay,
-            arrayDisplay,
-            objectDisplay
-          }
-          Quadrille._display(params)
-          graphics.pop()
+    for (const { row, col, bit } of bitboard.cells(filter)) {
+      if (bit) {
+        graphics.push()
+        graphics.translate(col * cellLength, row * cellLength)
+        options.row = row
+        options.col = col
+        const params = {
+          graphics,
+          value,
+          width: bitboard.width,
+          height: bitboard.height,
+          row,
+          col,
+          outline,
+          outlineWeight,
+          cellLength,
+          textColor,
+          textZoom,
+          textFont,
+          origin,
+          options,
+          functionDisplay,
+          imageDisplay,
+          colorDisplay,
+          stringDisplay,
+          numberDisplay,
+          tileDisplay,
+          arrayDisplay,
+          objectDisplay
         }
+        Quadrille._display(params)
+        graphics.pop()
       }
     }
     graphics.pop()
