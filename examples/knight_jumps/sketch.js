@@ -36,6 +36,6 @@ function mousePressed() {
   const dx = col - 5
   const dy = row - 5
 
-  knightBitboard = createBitboard(17592186044416n, COLS, ROWS).translate(dx, dy, true)
-  jumpsBitboard = createBitboard(46193421450995564544n, COLS, ROWS).translate(dx, dy, true)
+  knightBitboard = createBitboard(17592186044416n, COLS, ROWS).translate(dx, dy)
+  jumpsBitboard = createBitboard(46193421450995564544n, COLS, ROWS).translate(dx, dy)
 }
