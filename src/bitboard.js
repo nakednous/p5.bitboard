@@ -50,12 +50,15 @@ class Bitboard {
   get bitboard() {
     return this._bitboard
   }
+
   get width() {
     return this._width
   }
+
   get height() {
     return this._height
   }
+
   get littleEndian() {
     return this._littleEndian
   }
@@ -213,19 +216,38 @@ class Bitboard {
   }
 
   and(other) {
-    return new Bitboard((this._bitboard & other._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
+    const fitted = other._fit(this)
+    return new Bitboard((this._bitboard & fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   or(other) {
-    return new Bitboard((this._bitboard | other._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
+    const fitted = other._fit(this)
+    return new Bitboard((this._bitboard | fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   xor(other) {
-    return new Bitboard((this._bitboard ^ other._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
+    const fitted = other._fit(this)
+    return new Bitboard((this._bitboard ^ fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   not() {
     return new Bitboard((~this._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
+  }
+
+  _fit(other) {
+    const width = other.width
+    const height = other.height
+    const original = this.bitboard
+    const fitted = new Bitboard(0n, width, height, this._littleEndian)
+    for (const { row, col, bit } of this) {
+      if (row < height && col < width && bit) {
+        fitted.fill(row, col)
+      }
+    }
+    if (fitted.bitboard !== original) {
+      console.warn(`Bitboard value changed from ${original} to ${fitted.bitboard} to fit dimensions (${width}, ${height})`)
+    }
+    return fitted
   }
 
   rank() {
