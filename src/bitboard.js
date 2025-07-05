@@ -22,10 +22,17 @@ class Bitboard {
     let height
     let littleEndian = false
     args.forEach(arg =>
-      typeof arg === 'bigint' ? bitboard = arg :
-        typeof arg === 'number' && width === 8 ? width = arg :
-          typeof arg === 'number' && height === undefined ? height = arg :
-            typeof arg === 'boolean' ? littleEndian = arg : null
+      typeof arg === 'bigint'
+        ? bitboard = arg
+        : typeof arg === 'string'
+          ? bitboard = BigInt(arg.startsWith('0b') ? arg : '0b' + arg)
+          : typeof arg === 'number' && width === 8
+            ? width = arg
+            : typeof arg === 'number' && height === undefined
+              ? height = arg
+              : typeof arg === 'boolean'
+                ? littleEndian = arg
+                : null
     )
     if (height === undefined) {
       const bits = bitboard.toString(2).length
@@ -47,6 +54,41 @@ class Bitboard {
     this._littleEndian = littleEndian
   }
 
+  _patch(other) {
+    other._p = this._p
+    other._cellLength = this._cellLength
+    other._x = this._x
+    other._y = this._y
+    other._origin = this._origin
+    other.screenRow = this.screenRow
+    other.screenCol = this.screenCol
+  }
+
+  _create(...args) {
+    const bb = new Bitboard(...args)
+    this._patch(bb)
+    return bb
+  }
+
+  clone() {
+    const clone = new Bitboard(
+      this._bitboard,
+      this._width,
+      this._height,
+      this._littleEndian
+    )
+    this._patch(clone)
+    return clone
+  }
+
+  get mouseRow() {
+    return this.screenRow(this._p.mouseY);
+  }
+
+  get mouseCol() {
+    return this.screenCol(this._p.mouseX);
+  }
+
   get bitboard() {
     return this._bitboard
   }
@@ -61,15 +103,6 @@ class Bitboard {
 
   get littleEndian() {
     return this._littleEndian
-  }
-
-  clone() {
-    return new this.constructor(
-      this._bitboard,
-      this._width,
-      this._height,
-      this._littleEndian
-    )
   }
 
   *cells(filter = null) {
@@ -207,31 +240,27 @@ class Bitboard {
     return this._bitboard.toString(2)
   }
 
-  fromBinaryString(s) {
-    return new Bitboard(BigInt('0b' + s), this._width, this._height, this._littleEndian)
-  }
-
   mask() {
     return (1n << BigInt(this._width * this._height)) - 1n
   }
 
   and(other) {
     const fitted = other._fit(this)
-    return new Bitboard((this._bitboard & fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
+    return this._create((this._bitboard & fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   or(other) {
     const fitted = other._fit(this)
-    return new Bitboard((this._bitboard | fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
+    return this._create((this._bitboard | fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   xor(other) {
     const fitted = other._fit(this)
-    return new Bitboard((this._bitboard ^ fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
+    return this._create((this._bitboard ^ fitted.bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   not() {
-    return new Bitboard((~this._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
+    return this._create((~this._bitboard) & this.mask(), this._width, this._height, this._littleEndian)
   }
 
   _fit(other) {
@@ -250,7 +279,7 @@ class Bitboard {
     return fitted
   }
 
-  rank() {
+  order() {
     let count = 0n
     let v = this._bitboard
     while (v) {
@@ -285,7 +314,7 @@ class Bitboard {
         }
       }
     }
-    return new Bitboard(bits, S, S, false)
+    return this._create(bits, S, S, false)
   }
 
   translate(dx = 0, dy = 0, wrap = true) {
@@ -296,29 +325,27 @@ class Bitboard {
         if (((this._bitboard >> i) & 1n) === 1n) {
           let r2 = row + dy
           let c2 = col + dx
-
           if (wrap) {
             r2 = (r2 + this._height) % this._height
             c2 = (c2 + this._width) % this._width
           } else {
             if (r2 < 0 || r2 >= this._height || c2 < 0 || c2 >= this._width) continue
           }
-
           const j = this.index(r2, c2)
           result |= 1n << j
         }
       }
     }
-    return new Bitboard(result, this._width, this._height, this._littleEndian)
+    return this._create(result, this._width, this._height, this._littleEndian)
   }
 
   shift(dx = 1, wrap = true) {
     const totalBits = BigInt(this._width * this._height)
     const mask = (1n << totalBits) - 1n
-    if (dx === 0) return new Bitboard(this._bitboard, this._width, this._height, this._littleEndian)
+    if (dx === 0) return this._create(this._bitboard, this._width, this._height, this._littleEndian)
     if (Math.abs(dx) !== 1) {
       console.warn('shift only supports dx = -1, 0, or 1.')
-      return new Bitboard(this._bitboard, this._width, this._height, this._littleEndian)
+      return this._create(this._bitboard, this._width, this._height, this._littleEndian)
     }
     const left = dx === 1
     let result
@@ -333,7 +360,7 @@ class Bitboard {
         ? (this._bitboard << 1n) & mask
         : this._bitboard >> 1n
     }
-    return new Bitboard(result, this._width, this._height, this._littleEndian)
+    return this._create(result, this._width, this._height, this._littleEndian)
   }
 
   bounds() {
@@ -365,7 +392,7 @@ class Bitboard {
         }
       }
     }
-    return new Bitboard(result, w, h, this._littleEndian)
+    return this._create(result, w, h, this._littleEndian)
   }
 }
 
