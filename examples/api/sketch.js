@@ -30,6 +30,7 @@ function draw() {
 function mousePressed() {
   const row = board.mouseRow
   const col = board.mouseCol
-  console.log(row, col)
-  board.toggle(row, col)
+  //board.toggle(row, col)
+  const r = board.ring(row, col)
+  console.log(r.width, r.height, r.order())
 }
