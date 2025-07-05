@@ -157,6 +157,38 @@ class Bitboard {
     }
   }
 
+  transpose() {
+    let result = 0n
+    for (const { row, col } of this.cells(bit => bit === 1)) {
+      // Transpose: (row, col) → (col, row)
+      const raw = col * this._height + row
+      const index = this._littleEndian
+        ? BigInt(raw)
+        : BigInt(this._width * this._height - 1 - raw)
+      result |= 1n << index
+    }
+    [this._width, this._height] = [this._height, this._width]
+    this._bitboard = result
+    return this
+  }
+
+  reflect() {
+    let result = 0n
+    for (const { row, col } of this.cells(bit => bit === 1)) {
+      const i = BigInt((this._height - 1 - row) * this._width + col)
+      const index = this._littleEndian
+        ? i
+        : BigInt(this.size() - 1) - i
+      result |= 1n << index
+    }
+    this._bitboard = result
+    return this
+  }
+
+  rotate() {
+    return this.reflect().transpose()
+  }
+
   fill(...args) {
     if (args.length === 0) {
       // Fill entire bitboard
@@ -319,26 +351,23 @@ class Bitboard {
 
   translate(dx = 0, dy = 0, wrap = true) {
     let result = 0n
-    for (let row = 0; row < this._height; row++) {
-      for (let col = 0; col < this._width; col++) {
-        const i = BigInt(this.index(row, col))
-        if (((this._bitboard >> i) & 1n) === 1n) {
-          let r2 = row + dy
-          let c2 = col + dx
-          if (wrap) {
-            r2 = (r2 + this._height) % this._height
-            c2 = (c2 + this._width) % this._width
-          } else {
-            if (r2 < 0 || r2 >= this._height || c2 < 0 || c2 >= this._width) continue
-          }
-          const j = BigInt(this.index(r2, c2))
-          result |= 1n << j
-        }
+    for (const { row, col } of this.cells(bit => bit === 1)) {
+      let r2 = row + dy
+      let c2 = col + dx
+      if (wrap) {
+        r2 = (r2 + this._height) % this._height
+        c2 = (c2 + this._width) % this._width
+        const index = BigInt(this.index(r2, c2))
+        result |= 1n << index
+      } else if (r2 >= 0 && r2 < this._height && c2 >= 0 && c2 < this._width) {
+        const index = BigInt(this.index(r2, c2))
+        result |= 1n << index
       }
     }
     return this._create(result, this._width, this._height, this._littleEndian)
   }
 
+  /*
   shift(dx = 1, wrap = true) {
     const totalBits = BigInt(this.size())
     const mask = (1n << totalBits) - 1n
@@ -360,6 +389,17 @@ class Bitboard {
         ? (this._bitboard << 1n) & mask
         : this._bitboard >> 1n
     }
+    return this._create(result, this._width, this._height, this._littleEndian)
+  }
+  */
+
+  shift(wrap = true) {
+    const totalBits = BigInt(this.size())
+    const mask = (1n << totalBits) - 1n
+    const leftShifted = this._bitboard << 1n
+    let result = wrap
+      ? (leftShifted | (this._bitboard >> (totalBits - 1n))) & mask  // circular shift
+      : leftShifted & mask                                           // logical shift
     return this._create(result, this._width, this._height, this._littleEndian)
   }
 
