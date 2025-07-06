@@ -20,6 +20,10 @@ function draw() {
   drawBitboard(bitboard, color('lime'))
 }
 
+function mousePressed() {
+  bitboard = shiftRight()
+}
+
 function keyPressed() {
   const row = bitboard.mouseRow
   const col = bitboard.mouseCol
@@ -29,5 +33,21 @@ function keyPressed() {
   if (key === 's') bitboard = bitboard.shift()
   if (key === 't') bitboard.transpose()
   if (key === 'u') bitboard.transpose().fill(col).transpose()
+}
+
+function shiftLeft(wrap = true) {
+  return bitboard.shift(wrap)
+}
+
+function shiftRight(wrap = true) {
+  return bitboard.transpose().reflect().transpose().shift(wrap).transpose().reflect().transpose()
+}
+
+function shiftDown(wrap = true) {
+  return bitboard.transpose().shift(wrap).transpose()
+}
+
+function shiftUp(wrap = true) {
+  return bitboard.reflect().transpose().shift(wrap).transpose().reflect()
 }
 

@@ -367,32 +367,6 @@ class Bitboard {
     return this._create(result, this._width, this._height, this._littleEndian)
   }
 
-  /*
-  shift(dx = 1, wrap = true) {
-    const totalBits = BigInt(this.size())
-    const mask = (1n << totalBits) - 1n
-    if (dx === 0) return this._create(this._bitboard, this._width, this._height, this._littleEndian)
-    if (Math.abs(dx) !== 1) {
-      console.warn('shift only supports dx = -1, 0, or 1.')
-      return this._create(this._bitboard, this._width, this._height, this._littleEndian)
-    }
-    const left = dx === 1
-    let result
-    if (wrap) {
-      // Circular shift
-      result = left
-        ? ((this._bitboard << 1n) | (this._bitboard >> (totalBits - 1n))) & mask
-        : ((this._bitboard >> 1n) | ((this._bitboard & 1n) << (totalBits - 1n))) & mask
-    } else {
-      // Logical shift (zero fill)
-      result = left
-        ? (this._bitboard << 1n) & mask
-        : this._bitboard >> 1n
-    }
-    return this._create(result, this._width, this._height, this._littleEndian)
-  }
-  */
-
   shift(wrap = true) {
     const totalBits = BigInt(this.size())
     const mask = (1n << totalBits) - 1n
